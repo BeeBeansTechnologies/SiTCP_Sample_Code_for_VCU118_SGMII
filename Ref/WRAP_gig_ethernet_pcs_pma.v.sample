@@ -1,0 +1,135 @@
+`default_nettype none
+
+module WRAP_gig_ethernet_pcs_pma (
+	output	wire			PHY1_SGMII_IN_P		,	// out	: Tx signal line
+	output	wire			PHY1_SGMII_IN_N		,	// out	: 
+	input	wire			PHY1_SGMII_OUT_P	,	// in	: Rx signal line
+	input	wire			PHY1_SGMII_OUT_N	,	// in	: 
+	input	wire	[ 7:0]	GMII_TXD			,	// in:	[7:0] Transmit data from client MAC.
+	input	wire			GMII_TX_EN			,	// in:	Transmit control signal from client MAC.
+	input	wire			GMII_TX_ER			,	// in:	Transmit control signal from client MAC.
+	output	wire	[ 7:0]	GMII_RXD			,	// out:	[7:0] Received Data to client MAC.
+	output	wire			GMII_RX_DV			,	// out:	Received control signal to client MAC.
+	output	wire			GMII_RX_ER			,	// out:	Received control signal to client MAC.
+	output	wire			SGMII_CLK_EN		,
+	input	wire	[ 1:0]	SGMII_LINK			,
+	output	wire	[15:0]	STATUS_VECTOR		,
+	input	wire			SGMII_CLK_P			,
+	input	wire			SGMII_CLK_N			,
+	output	wire			SGMII_125M_OUT		,
+	output	wire			RX_PLL_LOCKED		,
+	output	wire			TX_PLL_LOCKED		,
+	input	wire			SGMII_RESET
+);
+
+
+	gig_ethernet_pcs_pma_0	gig_ethernet_pcs_pma_inst(
+	// LVDS transceiver Interface
+	//---------------------------
+		.txp_0					(PHY1_SGMII_IN_P	),	// out:	Differential +ve of serial transmission from PMA to PMD.
+		.txn_0					(PHY1_SGMII_IN_N	),	// out:	Differential -ve of serial transmission from PMA to PMD.
+		.rxp_0					(PHY1_SGMII_OUT_P	),	// in:	Differential +ve for serial reception from PMD to PMA.
+		.rxn_0					(PHY1_SGMII_OUT_N	),	// in:	Differential -ve for serial reception from PMD to PMA.
+		.signal_detect_0		(1'b1				),	// in:	
+		.gmii_txd_0				(GMII_TXD[7:0]		),	// in:	[7:0] Transmit data from client MAC.
+		.gmii_tx_en_0			(GMII_TX_EN			),	// in:	Transmit control signal from client MAC.
+		.gmii_tx_er_0			(GMII_TX_ER			),	// in:	Transmit control signal from client MAC.
+		.gmii_rxd_0				(GMII_RXD[7:0]		),	// out:	[7:0] Received Data to client MAC.
+		.gmii_rx_dv_0			(GMII_RX_DV			),	// out:	Received control signal to client MAC.
+		.gmii_rx_er_0			(GMII_RX_ER			),	// out:	Received control signal to client MAC.
+		.gmii_isolate_0			(),						// out:	Tristate control to electrically isolate GMII.
+		.sgmii_clk_r_0			(					),	// out:	Clock for client MAC (125Mhz, 12.5MHz or 1.25MHz).
+		.sgmii_clk_f_0			(),						// out:	Clock for client MAC (125Mhz, 12.5MHz or 1.25MHz).
+		.sgmii_clk_en_0			(SGMII_CLK_EN		),	// out:	Clock enable for client MAC
+	// Speed Control
+		//1 Gbps Operation
+		//	set speed_is_10_100 to logic 0
+		//100 Mbps Operation
+		//	set speed_is_10_100 to logic 1
+		//	set speed_is_100 to logic 1
+		//10 Mbps Operation
+		//	set speed_is_10_100 to logic 1
+		//	set speed_is_100 to logic 0
+		.speed_is_10_100_0		(SGMII_LINK[1]		),	// in:	Core should operate at either 10Mbps or 100Mbps speeds
+		.speed_is_100_0			(SGMII_LINK[0]		),	// in:	Core should operate at 100Mbps speed
+		.an_interrupt_0			(),						// out:	Interrupt to processor to signal that Auto-Negotiation has completed
+		.an_adv_config_vector_0	(16'd1				),	// in:	[15:0] Alternate interface to program REG4 (AN ADV)
+		.an_restart_config_0	(1'b0				),	// in:	Alternate signal to modify AN restart bit in REG0
+	// General IO's
+	//-------------
+		// status vector
+			// [15:14]	:	Pause 
+			// [13] 	:	Remote Fault
+			// [12] 	:	Duplex mode(1:Full, 0:Half)
+			// [11:10]	:	Speed(11:Reserved, 10:1000Mb/s, 01:100Mb/s, 00:10Mb/s)
+			// [ 9: 8]	:	Remote Fault Encoding
+			// [ 7]		:	PHY Link Status (SGMII mode only)
+			// [ 6]		:	RXNOTINTABLE
+			// [ 5]		:	RXDISPERR
+			// [ 4]		:	RUDI(INVALID)
+			// [ 3]		:	RUDI(/I/)
+			// [ 2]		:	RUDI(/C/)
+			// [ 1]		:	Link Synchronization
+			// [ 0]		:	Link Status
+		.status_vector_0		(STATUS_VECTOR[15:0]),	// out:	[15:0] Core status.	  
+	// Management: Alternative to MDIO Interface
+	//------------------------------------------
+		.configuration_vector_0	(5'b1_0000			),	// in:	[4:0] Alternative to MDIO interface.
+		.refclk625_p			(SGMII_CLK_P		),	// in:	
+		.refclk625_n			(SGMII_CLK_N		),	// in:
+		.clk125_out				(SGMII_125M_OUT		),	// out:	
+		.clk312_out				(),						// out:
+		.rst_125_out			(),						// out:
+		.tx_logic_reset			(),						// out: Can be kept open
+		.rx_logic_reset			(),						// out: Can be kept open
+		.rx_locked				(RX_PLL_LOCKED),		// out: Can be kept open
+		.tx_locked				(TX_PLL_LOCKED),		// out: Can be kept open
+		.tx_bsc_rst_out			(),						// out: for asynchronous 1000BASE-X/SGMII over LVDS when Shared logic is in core.
+		.rx_bsc_rst_out			(),						// out: for asynchronous 1000BASE-X/SGMII over LVDS when Shared logic is in core.
+		.tx_bs_rst_out			(),						// out:
+		.rx_bs_rst_out			(),						// out:
+		.tx_rst_dly_out			(),						// out: for asynchronous 1000BASE-X/SGMII over LVDS when Shared logic is in core.
+		.rx_rst_dly_out			(),						// out: for asynchronous 1000BASE-X/SGMII over LVDS when Shared logic is in core.
+		.tx_bsc_en_vtc_out		(),						// out: for asynchronous 1000BASE-X/SGMII over LVDS when Shared logic is in core.
+		.rx_bsc_en_vtc_out		(),						// out: for asynchronous 1000BASE-X/SGMII over LVDS when Shared logic is in core.
+		.tx_bs_en_vtc_out		(),						// out: for asynchronous 1000BASE-X/SGMII over LVDS when Shared logic is in core.
+		.rx_bs_en_vtc_out		(),						// out: for asynchronous 1000BASE-X/SGMII over LVDS when Shared logic is in core.
+		.riu_clk_out			(),						// out: Can be kept open
+		.riu_addr_out			(),						// out: [5:0] for asynchronous 1000BASE-X/SGMII over LVDS when Shared logic is in core.
+		.riu_wr_data_out		(),						// out: [15:0] for asynchronous 1000BASE-X/SGMII over LVDS when Shared logic is in core.
+		.riu_wr_en_out			(),						// out: for asynchronous 1000BASE-X/SGMII over LVDS when Shared logic is in core.
+		.riu_nibble_sel_out		(),						// out: [1:0] for asynchronous 1000BASE-X/SGMII over LVDS when Shared logic is in core.
+		.riu_rddata_3			(16'd0				),	// in: [15:0] For multiple core instantiations
+		.riu_valid_3			(1'b0				),	// in: For multiple core instantiations
+		.riu_prsnt_3			(1'b0				),	// in: For multiple core instantiations
+		.riu_rddata_2			(16'd0				),	// in: [15:0] For multiple core instantiations
+		.riu_valid_2			(1'b0				),	// in: For multiple core instantiations
+		.riu_prsnt_2			(1'b0				),	// in: For multiple core instantiations
+		.riu_rddata_1			(16'd0				),	// in: [15:0] For multiple core instantiations
+		.riu_valid_1			(1'b0				),	// in: For multiple core instantiations
+		.riu_prsnt_1			(1'b0				),	// in: For multiple core instantiations
+		.rx_btval_3				(),						// out: [8:0] For multiple core instantiations
+		.rx_btval_2				(),						// out: [8:0] For multiple core instantiations
+		.rx_btval_1				(),						// out: [8:0] For multiple core instantiations
+		.tx_dly_rdy_1			(1'b1				),	// in: For multiple core instantiations
+		.rx_dly_rdy_1			(1'b1				),	// in: For multiple core instantiations
+		.rx_vtc_rdy_1			(1'b1				),	// in: For multiple core instantiations
+		.tx_vtc_rdy_1			(1'b1				),	// in: For multiple core instantiations
+		.tx_dly_rdy_2			(1'b1				),	// in: For multiple core instantiations
+		.rx_dly_rdy_2			(1'b1				),	// in: For multiple core instantiations
+		.rx_vtc_rdy_2			(1'b1				),	// in: For multiple core instantiations
+		.tx_vtc_rdy_2			(1'b1				),	// in: For multiple core instantiations
+		.tx_dly_rdy_3			(1'b1				),	// in: For multiple core instantiations
+		.rx_dly_rdy_3			(1'b1				),	// in: For multiple core instantiations
+		.rx_vtc_rdy_3			(1'b1				),	// in: For multiple core instantiations
+		.tx_vtc_rdy_3			(1'b1				),	// in: For multiple core instantiations
+		.tx_pll_clk_out			(),						// out: for asynchronous 1000BASE-X/SGMII over LVDS when Shared logic is in core.
+		.rx_pll_clk_out			(),						// out: for asynchronous 1000BASE-X/SGMII over LVDS when Shared logic is in core.
+		.tx_rdclk_out			(),						// out: for asynchronous 1000BASE-X/SGMII over LVDS when Shared logic is in core.
+		.reset					(SGMII_RESET		)	// in:
+	);
+
+
+endmodule
+
+`default_nettype wire
